@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Logging;
 using NginxSpy.Models;
+using NginxSpy.Services.Interfaces;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Management;
 using System.Text.RegularExpressions;
-using NginxSpy.Services.Interfaces;
 
 namespace NginxSpy.Services;
 
@@ -316,10 +317,35 @@ public class NginxProcessService : INginxProcessService
             if (process == null)
                 return false;
 
-            await process.WaitForExitAsync();
-            var output = await process.StandardOutput.ReadToEndAsync();
-            
+            // 添加超时机制，避免无限等待
+            var timeout = TimeSpan.FromSeconds(10);
+            var exited = await Task.Run(() => process.WaitForExit((int)timeout.TotalMilliseconds));
+
+            if (!exited)
+            {
+                _logger.LogWarning($"验证nginx可执行文件超时: {executablePath}");
+                process.Kill(); // 确保杀死未响应的进程
+                return false;
+            }
+
+            // 使用 await 而非 .Result 避免潜在死锁
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            await Task.WhenAll(outputTask, errorTask);
+
+            var output = string.Concat(await outputTask, await errorTask);
+
             return output.Contains("nginx version", StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Win32Exception winEx)
+        {
+            _logger.LogWarning(winEx, $"启动nginx可执行文件失败（Win32异常）: {executablePath}");
+            return false;
+        }
+        catch (FileNotFoundException fileEx)
+        {
+            _logger.LogWarning(fileEx, $"nginx可执行文件未找到: {executablePath}");
+            return false;
         }
         catch (Exception ex)
         {
