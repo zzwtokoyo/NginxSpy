@@ -1,0 +1,255 @@
+<UserControl x:Class="NginxSpy.Views.ProcessManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:models="clr-namespace:NginxSpy.Models">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="200" />
+        </Grid.RowDefinitions>
+
+        <!-- 页面标题和操作按钮 -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="进程管理" Style="{StaticResource TitleTextStyle}" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="添加实例" 
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding AddInstanceCommand}">
+                    <Button.ToolTip>
+                        <ToolTip Content="添加新的nginx实例" />
+                    </Button.ToolTip>
+                </Button>
+
+                <Button Content="刷新" 
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding RefreshCommand}">
+                    <Button.ToolTip>
+                        <ToolTip Content="刷新实例列表" />
+                    </Button.ToolTip>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- 实例列表 -->
+        <materialDesign:Card Grid.Row="1" Style="{StaticResource StatusCardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- 列表标题 -->
+                <TextBlock Grid.Row="0" Text="Nginx实例列表" Style="{StaticResource SubtitleTextStyle}" />
+
+                <!-- 数据网格 -->
+                <DataGrid Grid.Row="1" 
+                          ItemsSource="{Binding NginxInstances}"
+                          SelectedItem="{Binding SelectedInstance}"
+                          Style="{StaticResource ProcessDataGridStyle}"
+                          Margin="0,8">
+                    <DataGrid.Columns>
+                        <!-- 状态指示器 -->
+                        <DataGridTemplateColumn Header="状态" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="12" Height="12" Margin="0,0,8,0">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static models:NginxStatus.Running}">
+                                                            <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static models:NginxStatus.Stopped}">
+                                                            <Setter Property="Fill" Value="{StaticResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static models:NginxStatus.Starting}">
+                                                            <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static models:NginxStatus.Stopping}">
+                                                            <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding Status}" FontSize="12" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- 实例名称 -->
+                        <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="150" />
+
+                        <!-- 进程ID -->
+                        <DataGridTextColumn Header="进程ID" Binding="{Binding ProcessId}" Width="80" />
+
+                        <!-- 可执行文件路径 -->
+                        <DataGridTextColumn Header="可执行文件" Binding="{Binding ExecutablePath}" Width="200" />
+
+                        <!-- 配置文件路径 -->
+                        <DataGridTextColumn Header="配置文件" Binding="{Binding ConfigPath}" Width="200" />
+
+                        <!-- CPU使用率 -->
+                        <DataGridTextColumn Header="CPU(%)" Binding="{Binding CpuUsage, StringFormat='{}{0:F1}'}" Width="80" />
+
+                        <!-- 内存使用量 -->
+                        <DataGridTextColumn Header="内存(MB)" Binding="{Binding MemoryUsage, StringFormat='{}{0:F0}'}" Width="100" />
+
+                        <!-- 最后启动时间 -->
+                        <DataGridTextColumn Header="最后启动" Binding="{Binding LastStarted, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="150" />
+
+                        <!-- 自动启动 -->
+                        <DataGridTemplateColumn Header="自动启动" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding AutoStart}" IsEnabled="False" HorizontalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 操作按钮 -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <Button Content="启动" 
+                            Style="{StaticResource SuccessButtonStyle}"
+                            Command="{Binding StartProcessCommand}">
+                        <Button.ToolTip>
+                            <ToolTip Content="启动选中的nginx进程" />
+                        </Button.ToolTip>
+                    </Button>
+
+                    <Button Content="停止" 
+                            Style="{StaticResource DangerButtonStyle}"
+                            Command="{Binding StopProcessCommand}">
+                        <Button.ToolTip>
+                            <ToolTip Content="停止选中的nginx进程" />
+                        </Button.ToolTip>
+                    </Button>
+
+                    <Button Content="重启" 
+                            Style="{StaticResource WarningButtonStyle}"
+                            Command="{Binding RestartProcessCommand}">
+                        <Button.ToolTip>
+                            <ToolTip Content="重启选中的nginx进程" />
+                        </Button.ToolTip>
+                    </Button>
+
+                    <Button Content="编辑" 
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding EditInstanceCommand}">
+                        <Button.ToolTip>
+                            <ToolTip Content="编辑选中的nginx实例" />
+                        </Button.ToolTip>
+                    </Button>
+
+                    <Button Content="删除" 
+                            Style="{StaticResource DangerButtonStyle}"
+                            Command="{Binding DeleteInstanceCommand}">
+                        <Button.ToolTip>
+                            <ToolTip Content="删除选中的nginx实例" />
+                        </Button.ToolTip>
+                    </Button>
+
+                    <Button Content="查看日志" 
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding ViewLogsCommand}">
+                        <Button.ToolTip>
+                            <ToolTip Content="查看选中实例的操作日志" />
+                        </Button.ToolTip>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- 分隔符 -->
+        <Separator Grid.Row="2" Margin="0,8" />
+
+        <!-- 操作日志 -->
+        <materialDesign:Card Grid.Row="3" Style="{StaticResource StatusCardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- 日志标题 -->
+                <TextBlock Grid.Row="0" Text="操作日志" Style="{StaticResource SubtitleTextStyle}" Margin="0,-31,0,39" />
+
+                <!-- 日志列表 -->
+                <DataGrid 
+                          ItemsSource="{Binding ProcessLogs}"
+                          Style="{StaticResource ProcessDataGridStyle}"
+                          Margin="0,-2,0,-21" Grid.RowSpan="2">
+                    <DataGrid.Columns>
+                        <!-- 时间 -->
+                        <DataGridTextColumn Header="时间" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="150" />
+
+                        <!-- 操作 -->
+                        <DataGridTextColumn Header="操作" Binding="{Binding Action}" Width="80" />
+
+                        <!-- 进程ID -->
+                        <DataGridTextColumn Header="进程ID" Binding="{Binding ProcessId}" Width="80" />
+
+                        <!-- 状态 -->
+                        <DataGridTemplateColumn Header="状态" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Status}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Success">
+                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Status}" Value="Failed">
+                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Status}" Value="InProgress">
+                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- 错误信息 -->
+                        <DataGridTextColumn Header="错误信息" Binding="{Binding ErrorMessage}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- 加载指示器 -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" 
+              Background="#80000000" 
+              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
+                           IsIndeterminate="True" 
+                           Width="50" Height="50" />
+                <TextBlock Text="加载中..." 
+                         Foreground="White" 
+                         FontSize="16" 
+                         HorizontalAlignment="Center" 
+                         Margin="0,16,0,0" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

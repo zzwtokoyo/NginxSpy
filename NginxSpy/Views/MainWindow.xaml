@@ -1,0 +1,116 @@
+<Window x:Class="NginxSpy.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:views="clr-namespace:NginxSpy.Views"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        Title="{Binding Title}" 
+        Height="800" Width="1200"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}">
+
+    <Window.Resources>
+        <!-- 局部资源定义 -->
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 顶部工具栏 -->
+        <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryMid" Padding="16,8">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <materialDesign:PackIcon Kind="Monitor" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Medium" VerticalAlignment="Center" />
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                    <Button Style="{StaticResource MaterialDesignToolButton}" 
+                            Command="{Binding AboutCommand}"
+                            ToolTip="关于">
+                        <materialDesign:PackIcon Kind="Information" />
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignToolButton}" 
+                            Command="{Binding ExitCommand}"
+                            ToolTip="退出">
+                        <materialDesign:PackIcon Kind="Close" />
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+        </materialDesign:ColorZone>
+
+        <!-- 主内容区域 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 左侧导航栏 -->
+            <materialDesign:ColorZone Grid.Column="0" Mode="Light" Padding="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,16">
+                        <!-- 监控页面 -->
+                        <Button Style="{StaticResource NavigationButtonStyle}"
+                                Command="{Binding NavigateToMonitorCommand}" Height="47">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="MonitorDashboard" Width="20" Height="20" Margin="0,0,12,0" />
+                                <TextBlock Text="实时监控" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- 进程管理页面 -->
+                        <Button Style="{StaticResource NavigationButtonStyle}"
+                                Command="{Binding NavigateToProcessManagementCommand}" Height="47">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Application" Width="20" Height="20" Margin="0,0,12,0" />
+                                <TextBlock Text="进程管理" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- 配置编辑页面 -->
+                        <Button Style="{StaticResource NavigationButtonStyle}"
+                                Command="{Binding NavigateToConfigEditorCommand}" Height="47">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FileEdit" Width="20" Height="20" Margin="0,0,12,0" />
+                                <TextBlock Text="配置编辑" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- 设置页面 -->
+                        <Button Style="{StaticResource NavigationButtonStyle}"
+                                Command="{Binding NavigateToSettingsCommand}" Height="47">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Settings" Width="20" Height="20" Margin="0,0,12,0" />
+                                <TextBlock Text="设置" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </materialDesign:ColorZone>
+
+            <!-- 右侧内容区域 -->
+            <ContentControl x:Name="MainContentControl" Grid.Column="1" Margin="16" />
+        </Grid>
+
+        <!-- 底部状态栏 -->
+        <materialDesign:ColorZone Grid.Row="2" Mode="PrimaryDark" Padding="16,4">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Text="就绪" FontSize="12" VerticalAlignment="Center" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Source={x:Static System:DateTime.Now}, StringFormat='yyyy-MM-dd HH:mm:ss'}" 
+                           FontSize="12" VerticalAlignment="Center" />
+            </DockPanel>
+        </materialDesign:ColorZone>
+    </Grid>
+</Window>

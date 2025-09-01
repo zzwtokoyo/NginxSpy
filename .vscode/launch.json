@@ -1,0 +1,64 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch NginxSpy",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/NginxSpy/bin/Debug/net8.0-windows/NginxSpy.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/NginxSpy",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "preLaunchTask": "build",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+                "VSTEST_HOST_DEBUG": "0"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            },
+            "justMyCode": false,
+            "enableStepFiltering": false,
+            "suppressJITOptimizations": true,
+            "logging": {
+                "moduleLoad": false,
+                "programOutput": true,
+                "exceptions": true,
+                "engineLogging": false
+            },
+            "requireExactSource": false,
+            "enableStepFiltering": false
+        },
+        {
+            "name": "Launch NginxSpy (No VS)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/NginxSpy/bin/Debug/net8.0-windows/NginxSpy.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/NginxSpy",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "preLaunchTask": "build",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "VSTEST_HOST_DEBUG": "0",
+                "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+                "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+                "DOTNET_NOLOGO": "1",
+                "VS_DEBUGGER_CAUSAL_LOGGING": "0",
+                "VSJITDEBUGGER": ""
+            },
+            "justMyCode": false,
+            "enableStepFiltering": false,
+            "suppressJITOptimizations": true
+        },
+        {
+            "name": "Attach to NginxSpy",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}

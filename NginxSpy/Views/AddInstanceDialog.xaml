@@ -1,0 +1,148 @@
+<Window x:Class="NginxSpy.Views.AddInstanceDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="添加Nginx实例" 
+        Height="500" 
+        Width="600"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 标题 -->
+        <TextBlock Grid.Row="0" 
+                   Text="添加新的Nginx实例" 
+                   Style="{StaticResource TitleTextStyle}" 
+                   Margin="0,0,0,24" />
+
+        <!-- 表单内容 -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- 实例名称 -->
+                <materialDesign:Card Style="{StaticResource FormCardStyle}" Margin="0,0,0,16">
+                    <StackPanel Margin="16">
+                        <TextBlock Text="实例名称" Style="{StaticResource LabelTextStyle}" />
+                        <TextBox x:Name="NameTextBox"
+                                 Text="{Binding InstanceName, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="请输入实例名称"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,8,0,0" />
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- 可执行文件路径 -->
+                <materialDesign:Card Style="{StaticResource FormCardStyle}" Margin="0,0,0,16">
+                    <StackPanel Margin="16">
+                        <TextBlock Text="Nginx可执行文件路径" Style="{StaticResource LabelTextStyle}" />
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding ExecutablePath, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="请选择nginx.exe文件"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                            <Button Grid.Column="1"
+                                    Content="浏览"
+                                    Command="{Binding BrowseExecutableCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Margin="8,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- 配置文件路径 -->
+                <materialDesign:Card Style="{StaticResource FormCardStyle}" Margin="0,0,0,16">
+                    <StackPanel Margin="16">
+                        <TextBlock Text="配置文件路径" Style="{StaticResource LabelTextStyle}" />
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding ConfigPath, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="请选择配置文件"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                            <Button Grid.Column="1"
+                                    Content="浏览"
+                                    Command="{Binding BrowseConfigCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Margin="8,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- 工作目录 -->
+                <materialDesign:Card Style="{StaticResource FormCardStyle}" Margin="0,0,0,16">
+                    <StackPanel Margin="16">
+                        <TextBlock Text="工作目录" Style="{StaticResource LabelTextStyle}" />
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="请选择工作目录"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" />
+                            <Button Grid.Column="1"
+                                    Content="浏览"
+                                    Command="{Binding BrowseWorkingDirectoryCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Margin="8,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- 验证结果 -->
+                <materialDesign:Card Style="{StaticResource FormCardStyle}" 
+                                     Margin="0,0,0,16"
+                                     Visibility="{Binding ShowValidationResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Margin="16">
+                        <TextBlock Text="验证结果" Style="{StaticResource LabelTextStyle}" />
+                        <TextBlock Text="{Binding ValidationMessage}"
+                                   Style="{StaticResource BooleanToBrushConverter}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,8,0,0" />
+                    </StackPanel>
+                </materialDesign:Card>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 按钮区域 -->
+        <Grid Grid.Row="2" Margin="0,24,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="验证"
+                    Command="{Binding ValidateCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}" />
+
+            <Button Grid.Column="2"
+                    Content="确定"
+                    Command="{Binding ConfirmCommand}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    IsDefault="True"
+                    Margin="0,0,8,0" />
+
+            <Button Grid.Column="3"
+                    Content="取消"
+                    Command="{Binding CancelCommand}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    IsCancel="True" />
+        </Grid>
+    </Grid>
+</Window>
