@@ -189,26 +189,21 @@ public class NginxProcessService : INginxProcessService
                 return true;
             }
 
-            // 尝试优雅停止
-            process.CloseMainWindow();
-            
-            // 等待进程退出
-            if (await WaitForExitAsync(process, TimeSpan.FromSeconds(10)))
-            {
-                _logger.LogInformation($"nginx进程已优雅停止，PID: {processId}");
-                return true;
-            }
-
-            // 如果优雅停止失败，强制终止
+            // 对于nginx进程，直接使用Kill方法，因为nginx作为服务进程通常没有主窗口
+            // CloseMainWindow对nginx无效，会导致不必要的10秒等待
+            _logger.LogInformation($"强制终止nginx进程，PID: {processId}");
             process.Kill();
+            
+            // 等待进程退出确认
             await WaitForExitAsync(process, TimeSpan.FromSeconds(5));
             
-            _logger.LogInformation($"nginx进程已强制停止，PID: {processId}");
+            _logger.LogInformation($"nginx进程已成功停止，PID: {processId}");
             return true;
         }
         catch (ArgumentException)
         {
             // 进程不存在
+            _logger.LogInformation($"nginx进程不存在或已退出，PID: {processId}");
             return true;
         }
         catch (Exception ex)
