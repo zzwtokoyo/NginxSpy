@@ -15,6 +15,7 @@ public class ConfigEditorViewModel : ViewModelBase
 {
     private readonly INginxConfigService _configService;
     private readonly INginxRepository _repository;
+    private readonly INginxProcessService _processService;
     private NginxInstance? _selectedInstance;
     private NginxConfig? _currentConfig;
     private string _configContent = string.Empty;
@@ -154,10 +155,11 @@ public class ConfigEditorViewModel : ViewModelBase
     /// </summary>
     public event Action<int>? JumpToLineRequested;
 
-    public ConfigEditorViewModel(INginxConfigService configService, INginxRepository repository)
+    public ConfigEditorViewModel(INginxConfigService configService, INginxRepository repository, INginxProcessService processService)
     {
         _configService = configService;
         _repository = repository;
+        _processService = processService;
 
         LoadConfigCommand = new AsyncRelayCommand(LoadConfigAsync, () => CanExecuteConfigCommand());
         SaveConfigCommand = new AsyncRelayCommand(SaveConfigAsync, () => CanExecuteConfigCommand());
@@ -447,8 +449,9 @@ public class ConfigEditorViewModel : ViewModelBase
             }
 
             // 重启nginx进程
-            // TODO: 注入INginxProcessService
-            System.Windows.MessageBox.Show("nginx重启功能需要注入进程服务", "提示",
+            var newProcessId = await _processService.RestartProcessAsync(SelectedInstance.ProcessId.Value);
+            
+            System.Windows.MessageBox.Show($"nginx重启成功，新PID: {newProcessId}", "成功",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
         }
         catch (Exception ex)
