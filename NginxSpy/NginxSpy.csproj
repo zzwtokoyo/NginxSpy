@@ -7,7 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- <ApplicationIcon>icon.ico</ApplicationIcon> -->
+    <ApplicationIcon>Resources\app-icon.ico</ApplicationIcon>
     <AssemblyTitle>Nginx Spy</AssemblyTitle>
     <AssemblyDescription>Windows桌面nginx监控管理工具</AssemblyDescription>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
