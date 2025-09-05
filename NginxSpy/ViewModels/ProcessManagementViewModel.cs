@@ -164,8 +164,8 @@ public class ProcessManagementViewModel : ViewModelBase
                 await RefreshDataAsync();
             });
             
-            System.Windows.MessageBox.Show($"进程启动成功，PID: {processId}", "成功",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            //System.Windows.MessageBox.Show($"进程启动成功，PID: {processId}", "成功",
+             //   System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
@@ -229,8 +229,8 @@ public class ProcessManagementViewModel : ViewModelBase
             
             if (success)
             {
-                System.Windows.MessageBox.Show("进程停止成功", "成功",
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                //System.Windows.MessageBox.Show("进程停止成功", "成功",
+                    //System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             else
             {
@@ -348,8 +348,8 @@ public class ProcessManagementViewModel : ViewModelBase
                 SelectedInstance = null;
                 NginxInstances.Remove(instanceToRemove);
                 
-                System.Windows.MessageBox.Show("实例删除成功", "成功",
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                //System.Windows.MessageBox.Show("实例删除成功", "成功",
+                    //System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             else
             {
@@ -398,8 +398,8 @@ public class ProcessManagementViewModel : ViewModelBase
                         SelectedInstance = newInstance;
                     }
                     
-                    System.Windows.MessageBox.Show($"实例 '{dialogViewModel.CreatedInstance.Name}' 添加成功", "成功",
-                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    //System.Windows.MessageBox.Show($"实例 '{dialogViewModel.CreatedInstance.Name}' 添加成功", "成功",
+                        //System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
                 else
                 {
