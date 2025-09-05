@@ -112,8 +112,6 @@ public class ProcessManagementViewModel : ViewModelBase
     {
         try
         {
-            IsLoading = true;
-
             var instances = await _processService.GetAllInstancesAsync();
             
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
@@ -130,10 +128,6 @@ public class ProcessManagementViewModel : ViewModelBase
             System.Windows.MessageBox.Show($"刷新数据时发生错误: {ex.Message}", "错误",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
-        finally
-        {
-            IsLoading = false;
-        }
     }
 
     /// <summary>
@@ -145,8 +139,6 @@ public class ProcessManagementViewModel : ViewModelBase
 
         try
         {
-            IsLoading = true;
-            
             var processId = await _processService.StartProcessAsync(
                 SelectedInstance.ExecutablePath, 
                 SelectedInstance.ConfigPath);
@@ -160,7 +152,17 @@ public class ProcessManagementViewModel : ViewModelBase
                 Status = ProcessStatus.Success
             });
 
-            await RefreshDataAsync();
+            // 立即更新当前实例状态
+            SelectedInstance.Status = NginxStatus.Running;
+            SelectedInstance.ProcessId = processId;
+            SelectedInstance.LastStarted = DateTime.Now;
+
+            // 异步刷新数据，不阻塞UI
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(1000); // 给进程一些时间完全启动
+                await RefreshDataAsync();
+            });
             
             System.Windows.MessageBox.Show($"进程启动成功，PID: {processId}", "成功",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
@@ -178,10 +180,6 @@ public class ProcessManagementViewModel : ViewModelBase
 
             System.Windows.MessageBox.Show($"启动进程失败: {ex.Message}", "错误",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-        }
-        finally
-        {
-            IsLoading = false;
         }
     }
 
@@ -202,8 +200,6 @@ public class ProcessManagementViewModel : ViewModelBase
 
         try
         {
-            IsLoading = true;
-            
             var success = await _processService.StopProcessAsync(SelectedInstance.ProcessId.Value);
 
             // 记录日志
@@ -215,7 +211,21 @@ public class ProcessManagementViewModel : ViewModelBase
                 Status = success ? ProcessStatus.Success : ProcessStatus.Failed
             });
 
-            await RefreshDataAsync();
+            // 立即更新当前实例状态，避免等待RefreshDataAsync
+            if (success)
+            {
+                SelectedInstance.Status = NginxStatus.Stopped;
+                SelectedInstance.ProcessId = null;
+                SelectedInstance.CpuUsage = 0;
+                SelectedInstance.MemoryUsage = 0;
+            }
+
+            // 异步刷新数据，不阻塞UI
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(500); // 给进程一些时间完全停止
+                await RefreshDataAsync();
+            });
             
             if (success)
             {
@@ -243,10 +253,6 @@ public class ProcessManagementViewModel : ViewModelBase
             System.Windows.MessageBox.Show($"停止进程失败: {ex.Message}", "错误",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
-        finally
-        {
-            IsLoading = false;
-        }
     }
 
     /// <summary>
@@ -266,8 +272,6 @@ public class ProcessManagementViewModel : ViewModelBase
 
         try
         {
-            IsLoading = true;
-            
             var newProcessId = await _processService.RestartProcessAsync(SelectedInstance.ProcessId.Value);
 
             // 记录日志
@@ -279,7 +283,17 @@ public class ProcessManagementViewModel : ViewModelBase
                 Status = ProcessStatus.Success
             });
 
-            await RefreshDataAsync();
+            // 立即更新当前实例状态
+            SelectedInstance.Status = NginxStatus.Running;
+            SelectedInstance.ProcessId = newProcessId;
+            SelectedInstance.LastStarted = DateTime.Now;
+
+            // 异步刷新数据，不阻塞UI
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(1000); // 给进程一些时间完全启动
+                await RefreshDataAsync();
+            });
             
             System.Windows.MessageBox.Show($"进程重启成功，新PID: {newProcessId}", "成功",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
@@ -298,10 +312,6 @@ public class ProcessManagementViewModel : ViewModelBase
 
             System.Windows.MessageBox.Show($"重启进程失败: {ex.Message}", "错误",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-        }
-        finally
-        {
-            IsLoading = false;
         }
     }
 
@@ -322,8 +332,6 @@ public class ProcessManagementViewModel : ViewModelBase
 
         try
         {
-            IsLoading = true;
-            
             // 如果进程正在运行，先停止
             if (SelectedInstance.Status == NginxStatus.Running && SelectedInstance.ProcessId.HasValue)
             {
@@ -335,8 +343,10 @@ public class ProcessManagementViewModel : ViewModelBase
             
             if (success)
             {
-                await RefreshDataAsync();
+                // 立即从UI中移除实例
+                var instanceToRemove = SelectedInstance;
                 SelectedInstance = null;
+                NginxInstances.Remove(instanceToRemove);
                 
                 System.Windows.MessageBox.Show("实例删除成功", "成功",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
@@ -351,10 +361,6 @@ public class ProcessManagementViewModel : ViewModelBase
         {
             System.Windows.MessageBox.Show($"删除实例失败: {ex.Message}", "错误",
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-        }
-        finally
-        {
-            IsLoading = false;
         }
     }
 
@@ -459,7 +465,7 @@ public class ProcessManagementViewModel : ViewModelBase
     /// </summary>
     private bool CanExecuteProcessCommand()
     {
-        return SelectedInstance != null && !IsLoading;
+        return SelectedInstance != null;
     }
 
     /// <summary>
@@ -467,6 +473,6 @@ public class ProcessManagementViewModel : ViewModelBase
     /// </summary>
     private bool CanExecuteInstanceCommand()
     {
-        return SelectedInstance != null && !IsLoading;
+        return SelectedInstance != null;
     }
 }

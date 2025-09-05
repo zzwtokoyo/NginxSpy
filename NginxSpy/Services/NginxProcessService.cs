@@ -183,22 +183,86 @@ public class NginxProcessService : INginxProcessService
         {
             _logger.LogInformation($"停止nginx进程，PID: {processId}");
 
-            var process = Process.GetProcessById(processId);
-            if (process.HasExited)
+            // 获取目标进程
+            var targetProcess = Process.GetProcessById(processId);
+            if (targetProcess.HasExited)
             {
+                _logger.LogInformation($"nginx进程已退出，PID: {processId}");
                 return true;
             }
 
-            // 对于nginx进程，直接使用Kill方法，因为nginx作为服务进程通常没有主窗口
-            // CloseMainWindow对nginx无效，会导致不必要的10秒等待
-            _logger.LogInformation($"强制终止nginx进程，PID: {processId}");
-            process.Kill();
+            // 获取nginx可执行文件路径，用于识别相关进程
+            var nginxExecutablePath = targetProcess.MainModule?.FileName;
+            if (string.IsNullOrEmpty(nginxExecutablePath))
+            {
+                _logger.LogWarning($"无法获取nginx可执行文件路径，PID: {processId}");
+                // 回退到单进程终止
+                targetProcess.Kill();
+                await WaitForExitAsync(targetProcess, TimeSpan.FromSeconds(10));
+                return true;
+            }
+
+            // 查找所有相关的nginx进程（主进程和工作进程）
+            var relatedProcesses = await FindRelatedNginxProcessesAsync(nginxExecutablePath);
+            _logger.LogInformation($"发现 {relatedProcesses.Count} 个相关nginx进程需要停止");
+
+            // 按优先级终止进程：先终止工作进程，最后终止主进程
+            var processesToKill = relatedProcesses.OrderBy(p => p.Id == processId ? 1 : 0).ToList();
             
-            // 等待进程退出确认
-            await WaitForExitAsync(process, TimeSpan.FromSeconds(5));
+            var killedProcesses = new List<int>();
+            foreach (var process in processesToKill)
+            {
+                try
+                {
+                    if (!process.HasExited)
+                    {
+                        _logger.LogInformation($"终止nginx进程，PID: {process.Id}");
+                        process.Kill();
+                        killedProcesses.Add(process.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, $"终止nginx进程失败，PID: {process.Id}");
+                }
+            }
+
+            // 等待所有进程退出
+            var allExited = true;
+            foreach (var process in processesToKill)
+            {
+                try
+                {
+                    var exited = await WaitForExitAsync(process, TimeSpan.FromSeconds(10));
+                    if (!exited)
+                    {
+                        _logger.LogWarning($"进程在10秒内未退出，PID: {process.Id}");
+                        allExited = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, $"等待进程退出时发生错误，PID: {process.Id}");
+                }
+                finally
+                {
+                    process.Dispose();
+                }
+            }
             
-            _logger.LogInformation($"nginx进程已成功停止，PID: {processId}");
-            return true;
+            // 确保进程已完全清理
+            await Task.Delay(500);
+            
+            if (allExited)
+            {
+                _logger.LogInformation($"所有nginx进程已成功停止，共终止 {killedProcesses.Count} 个进程");
+            }
+            else
+            {
+                _logger.LogWarning($"部分nginx进程可能未完全退出");
+            }
+            
+            return allExited;
         }
         catch (ArgumentException)
         {
@@ -239,6 +303,69 @@ public class NginxProcessService : INginxProcessService
             _logger.LogError(ex, $"重启nginx进程失败，PID: {processId}");
             throw;
         }
+    }
+
+    /// <summary>
+    /// 查找相关的nginx进程（主进程和工作进程）
+    /// </summary>
+    private async Task<List<Process>> FindRelatedNginxProcessesAsync(string nginxExecutablePath)
+    {
+        return await Task.Run(() =>
+        {
+            var relatedProcesses = new List<Process>();
+            
+            try
+            {
+                var allProcesses = Process.GetProcesses();
+                
+                foreach (var process in allProcesses)
+                {
+                    try
+                    {
+                        // 检查进程名是否包含nginx（不区分大小写），但排除NginxSpy自身
+                        if (process.ProcessName.IndexOf("nginx", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                            !process.ProcessName.Equals("NginxSpy", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // 检查可执行文件路径是否匹配
+                            var mainModule = process.MainModule;
+                            if (mainModule != null && 
+                                string.Equals(mainModule.FileName, nginxExecutablePath, StringComparison.OrdinalIgnoreCase))
+                            {
+                                relatedProcesses.Add(process);
+                                _logger.LogDebug($"发现相关nginx进程: {process.ProcessName} (PID: {process.Id})");
+                            }
+                            else if (mainModule == null)
+                            {
+                                // 如果无法获取MainModule，释放Process对象
+                                process.Dispose();
+                            }
+                            else
+                            {
+                                // 路径不匹配，释放Process对象
+                                process.Dispose();
+                            }
+                        }
+                        else
+                        {
+                            // 不是nginx进程，释放Process对象
+                            process.Dispose();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // 无法访问进程信息（权限不足等），释放Process对象
+                        _logger.LogDebug(ex, $"无法访问进程信息，PID: {process.Id}");
+                        process.Dispose();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查找相关nginx进程时发生错误");
+            }
+            
+            return relatedProcesses;
+        });
     }
 
     /// <summary>
