@@ -6,7 +6,7 @@
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         Title="{Binding Title}" 
         Height="800" Width="1200"
-        MinHeight="600" MinWidth="900"
+        MinHeight="650" MinWidth="1000"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"

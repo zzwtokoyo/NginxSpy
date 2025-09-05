@@ -58,6 +58,13 @@ public interface INginxConfigService
     Task<string> GenerateConfigContentAsync(NginxConfig config);
 
     /// <summary>
+    /// 从配置段列表生成配置文件内容
+    /// </summary>
+    /// <param name="sections">配置段列表</param>
+    /// <returns>配置文件内容</returns>
+    Task<string> GenerateConfigContentAsync(List<ConfigSection> sections);
+
+    /// <summary>
     /// 备份配置文件
     /// </summary>
     /// <param name="configPath">配置文件路径</param>

@@ -1,9 +1,18 @@
 <UserControl x:Class="NginxSpy.Views.ConfigEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:NginxSpy.Views"
+             xmlns:converters="clr-namespace:NginxSpy.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:EmptyStringToDefaultConverter x:Key="EmptyStringToDefaultConverter" />
+    </UserControl.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -11,7 +20,7 @@
         </Grid.RowDefinitions>
 
         <!-- 页面标题和操作按钮 -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -63,7 +72,7 @@
         </Grid>
 
         <!-- 实例选择和状态信息 -->
-        <materialDesign:Card Grid.Row="1" Style="{StaticResource StatusCardStyle}" Margin="0,0,0,16">
+        <materialDesign:Card Grid.Row="1" Style="{StaticResource StatusCardStyle}" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -83,24 +92,25 @@
                 </StackPanel>
 
                 <!-- 配置文件路径 -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
-                    <TextBlock Text="配置文件:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                    <TextBlock Text="配置文件:" VerticalAlignment="Center" FontSize="12" Margin="0,0,6,0" />
                     <TextBlock Text="{Binding SelectedInstance.ConfigPath}" 
                              VerticalAlignment="Center" 
                              FontFamily="Consolas" 
-                             FontSize="12" />
+                             FontSize="11" />
                 </StackPanel>
 
                 <!-- 未保存更改指示器 -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
                     <materialDesign:PackIcon Kind="ContentSave" 
-                                           Width="16" Height="16" 
+                                           Width="14" Height="14" 
                                            Foreground="{StaticResource WarningBrush}"
                                            VerticalAlignment="Center" 
-                                           Margin="0,0,4,0"
+                                           Margin="0,0,3,0"
                                            Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <TextBlock Text="有未保存的更改" 
                              Foreground="{StaticResource WarningBrush}"
+                             FontSize="12"
                              VerticalAlignment="Center"
                              Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 </StackPanel>
@@ -118,17 +128,18 @@
         </materialDesign:Card>
 
         <!-- 主编辑区域 -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="2" Margin="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250" />
-                <ColumnDefinition Width="8" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" MinWidth="200" MaxWidth="400" />
+                <ColumnDefinition Width="6" />
+                <ColumnDefinition Width="*" MinWidth="300" />
             </Grid.ColumnDefinitions>
 
-            <!-- 配置段列表 -->
+            <!-- 配置段树形结构 -->
             <materialDesign:Card Grid.Column="0" Style="{StaticResource ContentCardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
@@ -136,41 +147,148 @@
                     <!-- 配置段标题 -->
                     <Grid Grid.Row="0" Margin="0,0,0,8">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ViewList" 
+                            <materialDesign:PackIcon Kind="FileTree" 
                                                    Width="20" Height="20" 
                                                    VerticalAlignment="Center" 
                                                    Margin="0,0,8,0" />
-                            <TextBlock Text="配置段" 
+                            <TextBlock Text="配置段结构" 
                                      Style="{StaticResource SubtitleTextStyle}" 
                                      VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
 
-                    <!-- 配置段列表 -->
-                    <Border Grid.Row="1" 
+                    <!-- 配置段操作工具栏 -->
+                    <Border Grid.Row="1" Background="#F5F5F5" CornerRadius="4" Padding="10" Margin="0,0,0,8">
+                        <StackPanel>
+                            <!-- 上下文提示信息 -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <materialDesign:PackIcon Kind="Information" 
+                                                       Width="14" Height="14" 
+                                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                                       VerticalAlignment="Center" 
+                                                       Margin="0,0,4,0" />
+                                <TextBlock FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center">
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="当前选中: {0} | 可添加 {1} 种配置段类型">
+                                            <Binding Path="SelectedSection.DisplayName" Converter="{StaticResource EmptyStringToDefaultConverter}" ConverterParameter="无" FallbackValue="无" TargetNullValue="无" />
+                                            <Binding Path="ContextualTemplates.Count" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </StackPanel>
+                            
+                            <!-- 模板选择区域 -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Text="配置段类型:" VerticalAlignment="Center" 
+                                           FontWeight="SemiBold" FontSize="13" Margin="0,0,8,0" />
+                                <ComboBox x:Name="TemplateComboBox" 
+                                          ItemsSource="{Binding ContextualTemplates}"
+                                          SelectedItem="{Binding SelectedTemplate}"
+                                          Width="180" Height="28">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Vertical">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="11" />
+                                                <TextBlock Text="{Binding Description}" 
+                                                           FontSize="9" Foreground="Gray" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Text="(基于选中节点)" 
+                                           FontSize="10" 
+                                           Foreground="{StaticResource SecondaryTextBrush}"
+                                           VerticalAlignment="Center" 
+                                           Margin="8,0,0,0" />
+                            </StackPanel>
+                            
+                            <!-- 操作按钮区域 -->
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="➕ 添加" Command="{Binding AddSectionCommand}" 
+                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Background="#4CAF50" Foreground="White"
+                                        Width="75" Height="30" Margin="0,0,8,0" FontSize="11" />
+                                <Button Content="🗑️ 删除" Command="{Binding DeleteSectionCommand}" 
+                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Background="#F44336" Foreground="White"
+                                        Width="75" Height="30" Margin="0,0,8,0" FontSize="11" />
+                                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" 
+                                           Margin="8,0" />
+                                <Button Content="📂 展开" Command="{Binding ExpandAllCommand}" 
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Width="85" Height="30" Margin="0,0,8,0" FontSize="11" />
+                                <Button Content="📁 折叠" Command="{Binding CollapseAllCommand}" 
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Width="85" Height="30" FontSize="11" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 配置段树形视图 -->
+                    <Border Grid.Row="2" 
                             BorderBrush="{StaticResource MaterialDesignDivider}" 
                             BorderThickness="1">
-                        <ListBox ItemsSource="{Binding ConfigSections}"
-                                 SelectedItem="{Binding SelectedSection}"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="4">
-                                        <materialDesign:PackIcon Kind="ChevronRight" 
-                                                               Width="16" Height="16" 
+                        <TreeView x:Name="ConfigTreeView"
+                                  ItemsSource="{Binding ConfigSections}"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                            <TreeView.ItemContainerStyle>
+                                <Style TargetType="TreeViewItem" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                    <Setter Property="Padding" Value="2" />
+                                </Style>
+                            </TreeView.ItemContainerStyle>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal" Margin="1">
+                                        <!-- 配置段类型图标 -->
+                                        <materialDesign:PackIcon Width="14" Height="14" 
                                                                VerticalAlignment="Center" 
-                                                               Margin="0,0,4,0" />
-                                        <TextBlock Text="{Binding SectionType}" 
+                                                               Margin="0,0,3,0">
+                                            <materialDesign:PackIcon.Style>
+                                                <Style TargetType="materialDesign:PackIcon">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SectionType}" Value="main">
+                                                            <Setter Property="Kind" Value="Settings" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SectionType}" Value="events">
+                                                            <Setter Property="Kind" Value="Flash" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SectionType}" Value="http">
+                                                            <Setter Property="Kind" Value="Web" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SectionType}" Value="server">
+                                                            <Setter Property="Kind" Value="Server" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SectionType}" Value="location">
+                                                            <Setter Property="Kind" Value="MapMarker" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding SectionType}" Value="upstream">
+                                                            <Setter Property="Kind" Value="CloudUpload" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                    <Setter Property="Kind" Value="FileDocument" />
+                                                </Style>
+                                            </materialDesign:PackIcon.Style>
+                                        </materialDesign:PackIcon>
+                                        
+                                        <!-- 配置段名称 -->
+                                        <TextBlock Text="{Binding DisplayName}" 
                                                  FontWeight="Bold" 
+                                                 FontSize="12"
                                                  VerticalAlignment="Center" />
+                                        
+                                        <!-- 配置段描述 -->
                                         <TextBlock Text="{Binding Name}" 
-                                                 Margin="4,0,0,0" 
+                                                 Margin="3,0,0,0" 
                                                  VerticalAlignment="Center" 
-                                                 Foreground="Gray" />
+                                                 Foreground="Gray" 
+                                                 FontSize="10"
+                                                 Visibility="{Binding Name, Converter={StaticResource StringToVisibilityConverter}}" />
                                     </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
                     </Border>
                 </Grid>
             </materialDesign:Card>
@@ -191,7 +309,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- 编辑器标题 -->
-                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -199,7 +317,7 @@
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="FileEdit" 
-                                                   Width="20" Height="20" 
+                                                   Width="18" Height="18" 
                                                    VerticalAlignment="Center" 
                                                    Margin="0,0,8,0" />
                             <TextBlock Text="配置文件编辑器" 
@@ -224,7 +342,7 @@
                     <Border Grid.Row="1" 
                             BorderBrush="{StaticResource MaterialDesignDivider}" 
                             BorderThickness="1" 
-                            Margin="0,8">
+                            Margin="0">
                         <TextBox x:Name="ConfigTextBox"
                                  Text="{Binding ConfigContent, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True"
@@ -233,66 +351,71 @@
                                  HorizontalScrollBarVisibility="Auto"
                                  FontFamily="Consolas"
                                  FontSize="12"
-                                 Padding="8"
+                                 Padding="10"
                                  Background="#FAFAFA"
                                  TextWrapping="NoWrap" />
                     </Border>
 
                     <!-- 状态栏 -->
-                    <Grid Grid.Row="2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <Border Grid.Row="2" 
+                            Background="{DynamicResource MaterialDesignDivider}" 
+                            Padding="10,6" 
+                            Margin="0,10,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <!-- 验证状态 -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="CheckCircle" 
-                                                   Width="16" Height="16" 
-                                                   Foreground="{StaticResource SuccessBrush}"
-                                                   VerticalAlignment="Center" 
-                                                   Margin="0,0,4,0"
-                                                   Visibility="{Binding CurrentConfig.IsValid, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <materialDesign:PackIcon Kind="AlertCircle" 
-                                                   Width="16" Height="16" 
-                                                   Foreground="{StaticResource DangerBrush}"
-                                                   VerticalAlignment="Center" 
-                                                   Margin="0,0,4,0">
-                                <materialDesign:PackIcon.Visibility>
-                                    <Binding Path="CurrentConfig.IsValid" Converter="{StaticResource BooleanToVisibilityConverter}">
-                                        <Binding.ConverterParameter>
-                                            <x:Static Member="Visibility.Collapsed" />
-                                        </Binding.ConverterParameter>
-                                    </Binding>
-                                </materialDesign:PackIcon.Visibility>
-                            </materialDesign:PackIcon>
-                            <TextBlock Text="配置有效" 
-                                     VerticalAlignment="Center" 
-                                     FontSize="12"
-                                     Visibility="{Binding CurrentConfig.IsValid, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <TextBlock Text="配置无效" 
-                                     VerticalAlignment="Center" 
-                                     FontSize="12"
-                                     Foreground="{StaticResource DangerBrush}">
-                                <TextBlock.Visibility>
-                                    <Binding Path="CurrentConfig.IsValid" Converter="{StaticResource BooleanToVisibilityConverter}">
-                                        <Binding.ConverterParameter>
-                                            <x:Static Member="Visibility.Collapsed" />
-                                        </Binding.ConverterParameter>
-                                    </Binding>
-                                </TextBlock.Visibility>
-                            </TextBlock>
-                        </StackPanel>
+                            <!-- 验证状态 -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="CheckCircle" 
+                                                       Width="16" Height="16" 
+                                                       Foreground="{StaticResource SuccessBrush}"
+                                                       VerticalAlignment="Center" 
+                                                       Margin="0,0,4,0"
+                                                       Visibility="{Binding CurrentConfig.IsValid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <materialDesign:PackIcon Kind="AlertCircle" 
+                                                       Width="16" Height="16" 
+                                                       Foreground="{StaticResource DangerBrush}"
+                                                       VerticalAlignment="Center" 
+                                                       Margin="0,0,4,0">
+                                    <materialDesign:PackIcon.Visibility>
+                                        <Binding Path="CurrentConfig.IsValid" Converter="{StaticResource BooleanToVisibilityConverter}">
+                                            <Binding.ConverterParameter>
+                                                <x:Static Member="Visibility.Collapsed" />
+                                            </Binding.ConverterParameter>
+                                        </Binding>
+                                    </materialDesign:PackIcon.Visibility>
+                                </materialDesign:PackIcon>
+                                <TextBlock Text="配置有效" 
+                                         VerticalAlignment="Center" 
+                                         FontSize="12"
+                                         Visibility="{Binding CurrentConfig.IsValid, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <TextBlock Text="配置无效" 
+                                         VerticalAlignment="Center" 
+                                         FontSize="12"
+                                         Foreground="{StaticResource DangerBrush}">
+                                    <TextBlock.Visibility>
+                                        <Binding Path="CurrentConfig.IsValid" Converter="{StaticResource BooleanToVisibilityConverter}">
+                                            <Binding.ConverterParameter>
+                                                <x:Static Member="Visibility.Collapsed" />
+                                            </Binding.ConverterParameter>
+                                        </Binding>
+                                    </TextBlock.Visibility>
+                                </TextBlock>
+                            </StackPanel>
 
-                        <!-- 字符统计 -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <TextBlock Text="字符数:" VerticalAlignment="Center" FontSize="12" Margin="0,0,4,0" />
-                            <TextBlock Text="{Binding ConfigContent.Length}" 
-                                     VerticalAlignment="Center" 
-                                     FontSize="12" 
-                                     FontWeight="Bold" />
-                        </StackPanel>
-                    </Grid>
+                            <!-- 字符统计 -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <TextBlock Text="字符数:" VerticalAlignment="Center" FontSize="12" Margin="0,0,4,0" />
+                                <TextBlock Text="{Binding ConfigContent.Length}" 
+                                         VerticalAlignment="Center" 
+                                         FontSize="12" 
+                                         FontWeight="Bold" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
             </materialDesign:Card>
         </Grid>
@@ -304,12 +427,12 @@
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" 
                            IsIndeterminate="True" 
-                           Width="50" Height="50" />
+                           Width="40" Height="40" />
                 <TextBlock Text="处理中..." 
                          Foreground="White" 
-                         FontSize="16" 
+                         FontSize="14" 
                          HorizontalAlignment="Center" 
-                         Margin="0,16,0,0" />
+                         Margin="0,12,0,0" />
             </StackPanel>
         </Grid>
     </Grid>

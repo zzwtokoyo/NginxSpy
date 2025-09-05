@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.Collections.ObjectModel;
+
 namespace NginxSpy.Models;
 
 /// <summary>
@@ -47,10 +50,15 @@ public class NginxConfig
 }
 
 /// <summary>
-/// 配置段模型
+/// 配置段模型 - 支持树状结构
 /// </summary>
-public class ConfigSection
+public class ConfigSection : INotifyPropertyChanged
 {
+    private bool _isExpanded = true;
+    private bool _isSelected;
+    private string _displayName = string.Empty;
+    private ObservableCollection<ConfigSection> _children = new();
+
     /// <summary>
     /// 配置段ID
     /// </summary>
@@ -92,9 +100,18 @@ public class ConfigSection
     public int EndLineNumber { get; set; }
 
     /// <summary>
-    /// 子配置段列表
+    /// 子配置段列表 - 支持数据绑定
     /// </summary>
-    public List<ConfigSection> Children { get; set; } = new();
+    public ObservableCollection<ConfigSection> Children
+    {
+        get => _children;
+        set
+        {
+            _children = value;
+            OnPropertyChanged(nameof(Children));
+            OnPropertyChanged(nameof(HasChildren));
+        }
+    }
 
     /// <summary>
     /// 父配置段
@@ -105,6 +122,184 @@ public class ConfigSection
     /// 关联的配置文件
     /// </summary>
     public NginxConfig? ConfigFile { get; set; }
+
+    /// <summary>
+    /// 树节点是否展开
+    /// </summary>
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set
+        {
+            _isExpanded = value;
+            OnPropertyChanged(nameof(IsExpanded));
+        }
+    }
+
+    /// <summary>
+    /// 树节点是否被选中
+    /// </summary>
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            _isSelected = value;
+            OnPropertyChanged(nameof(IsSelected));
+        }
+    }
+
+    /// <summary>
+    /// 显示名称
+    /// </summary>
+    public string DisplayName
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(_displayName))
+                return _displayName;
+
+            return string.IsNullOrEmpty(Name) ? SectionType : $"{SectionType} {Name}";
+        }
+        set
+        {
+            _displayName = value;
+            OnPropertyChanged(nameof(DisplayName));
+        }
+    }
+
+    /// <summary>
+    /// 是否有子节点
+    /// </summary>
+    public bool HasChildren => Children.Count > 0;
+
+    /// <summary>
+    /// 配置段深度级别
+    /// </summary>
+    public int Level
+    {
+        get
+        {
+            int level = 0;
+            var parent = Parent;
+            while (parent != null)
+            {
+                level++;
+                parent = parent.Parent;
+            }
+            return level;
+        }
+    }
+
+    /// <summary>
+    /// 获取配置段类型的枚举值
+    /// </summary>
+    public NginxSectionType SectionTypeEnum
+    {
+        get
+        {
+            return SectionType.ToLower() switch
+            {
+                "main" => NginxSectionType.Main,
+                "events" => NginxSectionType.Events,
+                "http" => NginxSectionType.Http,
+                "server" => NginxSectionType.Server,
+                "location" => NginxSectionType.Location,
+                "upstream" => NginxSectionType.Upstream,
+                "if" => NginxSectionType.If,
+                "map" => NginxSectionType.Map,
+                "geo" => NginxSectionType.Geo,
+                "limit" => NginxSectionType.Limit,
+                "types" => NginxSectionType.Types,
+                "split_clients" => NginxSectionType.SplitClients,
+                "stream" => NginxSectionType.Stream,
+                "mail" => NginxSectionType.Mail,
+                _ => NginxSectionType.Main
+            };
+        }
+    }
+
+    /// <summary>
+    /// 添加子配置段
+    /// </summary>
+    public void AddChild(ConfigSection child)
+    {
+        child.Parent = this;
+        child.ParentId = this.Id;
+        Children.Add(child);
+        OnPropertyChanged(nameof(HasChildren));
+    }
+
+    /// <summary>
+    /// 移除子配置段
+    /// </summary>
+    public bool RemoveChild(ConfigSection child)
+    {
+        var removed = Children.Remove(child);
+        if (removed)
+        {
+            child.Parent = null;
+            child.ParentId = null;
+            OnPropertyChanged(nameof(HasChildren));
+        }
+        return removed;
+    }
+
+    /// <summary>
+    /// 移动子配置段位置
+    /// </summary>
+    public void MoveChild(int oldIndex, int newIndex)
+    {
+        if (oldIndex >= 0 && oldIndex < Children.Count && 
+            newIndex >= 0 && newIndex < Children.Count && 
+            oldIndex != newIndex)
+        {
+            Children.Move(oldIndex, newIndex);
+        }
+    }
+
+    /// <summary>
+    /// 获取所有后代配置段
+    /// </summary>
+    public IEnumerable<ConfigSection> GetAllDescendants()
+    {
+        foreach (var child in Children)
+        {
+            yield return child;
+            foreach (var descendant in child.GetAllDescendants())
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取根配置段
+    /// </summary>
+    public ConfigSection GetRoot()
+    {
+        var current = this;
+        while (current.Parent != null)
+        {
+            current = current.Parent;
+        }
+        return current;
+    }
+
+    /// <summary>
+    /// 检查是否可以添加指定类型的子配置段
+    /// </summary>
+    public bool CanAddChild(NginxSectionType childType)
+    {
+        return ConfigSectionTemplateProvider.CanAddChild(SectionTypeEnum, childType);
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged(string propertyName)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }
 
 /// <summary>
