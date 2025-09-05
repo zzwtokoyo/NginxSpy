@@ -118,7 +118,7 @@ public class MainWindowViewModel : ViewModelBase
             "Nginx Spy v1.0.0\n\n" +
             "Windows桌面nginx监控管理工具\n" +
             "提供nginx进程监控、配置管理等功能\n\n" +
-            "© 2025 Copyright 钟振伟+AI",
+            "© 2025 Copyright zzwtokoyo + AI Mod",
             "关于 Nginx Spy",
             System.Windows.MessageBoxButton.OK,
             System.Windows.MessageBoxImage.Information);
